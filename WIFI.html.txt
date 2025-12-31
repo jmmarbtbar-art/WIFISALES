@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فروش وای‌فای آنلاین</title>
+
+<style>
+body{font-family:sans-serif;background:#f2f2f2;padding:10px}
+.box{background:#fff;padding:15px;border-radius:8px;max-width:420px;margin:auto}
+.hidden{display:none}
+button,input,select{width:100%;padding:8px;margin-top:6px}
+.code{display:flex;justify-content:space-between;margin:5px 0}
+.total{background:#eee;padding:10px;border-radius:6px;margin-top:10px}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="login">
+<h3>ورود فروشنده</h3>
+<select id="seller">
+  <option value="s1">فروشنده 1</option>
+  <option value="s2">فروشنده 2</option>
+  <option value="s3">فروشنده 3</option>
+  <option value="s4">فروشنده 4</option>
+</select>
+<button onclick="login()">ورود</button>
+</div>
+
+<div class="box hidden" id="panel">
+<h3 id="title"></h3>
+<div id="list"></div>
+
+<div class="total">
+تعداد فروخته شده: <span id="count">0</span><br>
+جمع مبلغ: <span id="sum">0</span> افغانی
+</div>
+
+<button onclick="location.reload()">خروج</button>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbwGzWQNWVjxu-G2OtOn8YefyyGlIRemjcL8TpILoGM6Yuz30lPG0YrXatme05VKdmTvPw/exec";
+const PRICE = 40;
+let currentSeller = "";
+
+function login(){
+  currentSeller = seller.value;
+  document.getElementById("login").classList.add("hidden");
+  panel.classList.remove("hidden");
+  title.innerText = "پنل " + currentSeller;
+  loadCodes();
+}
+
+async function loadCodes(){
+  list.innerHTML="";
+  count.innerText=0;
+  sum.innerText=0;
+
+  const res = await fetch(API);
+  const data = await res.json();
+
+  let soldCount=0;
+
+  for(let i=1;i<data.length;i++){
+    let seller=data[i][0];
+    let code=data[i][1];
+    let sold=data[i][2];
+
+    if(seller===currentSeller && sold!==true){
+      let d=document.createElement("div");
+      d.className="code";
+      d.innerHTML=`${code} <input type="checkbox" onchange="sell('${code}',this)">`;
+      list.appendChild(d);
+    }
+
+    if(seller===currentSeller && sold===true){
+      soldCount++;
+    }
+  }
+
+  count.innerText=soldCount;
+  sum.innerText=soldCount*PRICE;
+}
+
+async function sell(code,el){
+  await fetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      seller:currentSeller,
+      code:code
+    })
+  });
+  el.parentElement.remove();
+  loadCodes();
+}
+</script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2196f3">
+
+</body>
+</html>
